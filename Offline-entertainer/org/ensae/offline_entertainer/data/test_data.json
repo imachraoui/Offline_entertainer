@@ -1,0 +1,4 @@
+[
+  {id: 1, authors: "Pete Hunt", text: "This is comment n°1"},
+  {id: 2, authors: "Jordan Walke", text: "This is comment n°2"}
+]
