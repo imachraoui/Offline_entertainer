@@ -52,6 +52,7 @@
 	var bootstrap = __webpack_require__(160);
 
 	var Panel = ReactBootstrap.Panel;
+
 	var ArticleForm = React.createClass({
 	  displayName: 'ArticleForm',
 
@@ -84,13 +85,22 @@
 	var Article = React.createClass({
 	  displayName: 'Article',
 
+	  getStyle: function getStyle() {
+	    var style;
+	    if (this.props.isArticle != 1) {
+	      style = "danger";
+	    } else {
+	      style = "primary";
+	    }
+	    return style;
+	  },
 	  render: function render() {
 	    return React.createElement(
 	      'div',
 	      { className: 'Article' },
 	      React.createElement(
 	        Panel,
-	        { header: this.props.title, bsStyle: 'primary' },
+	        { header: this.props.title, bsStyle: this.getStyle() },
 	        this.props.children.toString()
 	      )
 	    );
@@ -100,11 +110,24 @@
 	var ArticleList = React.createClass({
 	  displayName: 'ArticleList',
 
+	  getInitialState: function getInitialState() {
+	    return { datax: [] };
+	  },
+	  shouldComponentUpdate: function shouldComponentUpdate() {
+	    return true;
+	  },
+	  update: function update() {
+	    this.state.datax.push(this.props.data);
+	  },
 	  render: function render() {
-	    var articles = this.props.data.map(function (article) {
+	    var test = this.state.data;
+	    test.sort(function (a, b) {
+	      return b.time_added - a.time_added;
+	    });
+	    var articles = test.map(function (article) {
 	      return React.createElement(
 	        Article,
-	        { text: article.text, title: article.title, key: article.url },
+	        { text: article.text, title: article.title, key: article.url, isArticle: article.is_article },
 	        article.text
 	      );
 	    });

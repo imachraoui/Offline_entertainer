@@ -1,5 +1,7 @@
 import ssl
 import urllib
+import urllib3.request as req
+import urllib3.response as resp
 from flask import redirect
 import requests
 
@@ -21,7 +23,7 @@ class PocketApi():
         self.request_token = responseText.decode('ascii').rsplit('=')[1]
 
     def parse_input(self,values) :
-
+        data = req.urlencode(values)
         data = urllib.parse.urlencode(values)
         data = data.encode('ascii')
         return(data)

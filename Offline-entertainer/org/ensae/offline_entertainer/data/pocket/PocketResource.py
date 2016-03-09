@@ -3,7 +3,7 @@ import datetime
 
 
 class PocketResource(object):
-    def __init__(self, uid, url, is_article, has_video, has_image, title, text, time_added=None, images=None,
+    def __init__(self, uid, url, is_article, has_video, has_image, title, text, time_added=None, language=None, images=None,
                  videos=None):
         self.uid = uid
         self.url = url
@@ -18,6 +18,13 @@ class PocketResource(object):
         self.videos = videos
         self.text = text
         self.title = title
+        self.language = language
+
+    def getText(self):
+        return(self.text)
+
+    def setLanguage(self,language):
+        self.language = language
 
     @staticmethod
     def as_pocketresource(dct):
