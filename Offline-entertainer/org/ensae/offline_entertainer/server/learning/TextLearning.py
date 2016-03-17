@@ -1,63 +1,103 @@
 import json
 from org.ensae.offline_entertainer.data.pocket.PocketResource import PocketResource
 import datetime
+from datetime import date
+from datetime import timedelta
+import calendar
 import urllib3
 from collections import Counter
 import operator
 import nltk
-# from nltk.book import *
 from nltk.probability import *
-# from nltk.corpus import gutenberg
 from nltk.corpus import *
 from nltk import word_tokenize
 from nltk import *
 import itertools
 import numpy as np
 from nltk.tokenize import RegexpTokenizer
-#from org.ensae.offline_entertainer.data.pocket import articles_service
-import org.ensae.offline_entertainer.server.learning.lib.RSSFeedsHelper as rssfeedsHelper
 
 class TextLearning() :
-    def getDomains(userid):
-        articles = articles_service.get_articles(userid)
+
+    reg_words = r"(?x)"
+    # Smileys
+    reg_words += "(?:[:=;] [oO\-]? [D\)\]\(\]/\\OpP])"
+    # nombres
+    reg_words += "| (?:(?:\d+,?)+(?:\.?\d+)?)"
+    reg_words += "| (\$|\€)?\d+(\.\d+)?%?"
+    # contractions d', l', ...
+    reg_words += "| \w'"
+    reg_words += "| \w+"
+    reg_words = r"\w'"
+    reg_words += '|((?<=[^\w\s])\w(?=[^\w\s])|(\W))+'
+    stop_words_location = 'C:/Users/wymeka/Documents/ENSAE/Projet-Python/Offline-entertainer/org/ensae/offline_entertainer/server/learning/rss'
+
+    frenchStemmer=nltk.stem.SnowballStemmer('french', ignore_stopwords=True)
+    englishStemmer=nltk.stem.SnowballStemmer('english', ignore_stopwords=True)
+    frenchWordTokenizer=RegexpTokenizer(reg_words,gaps=True)
+
+    def __init__(self,language) :
+        if(language == 'english'):
+            self.stemmer = self.englishStemmer
+            self.word_tokenizer = self.frenchWordTokenizer
+            self.stop_words = self.load_stopwords(language)
+        else :
+            self.stemmer = self.frenchStemmer
+            self.word_tokenizer = self.frenchWordTokenizer
+            self.stop_words = self.load_stopwords('french')
+
+    @staticmethod
+    def get_weighted_domains(articles):
+
+        domains_indexed = {}
         domains = []
         for article in articles :
             domain= urllib3.util.parse_url(article["url"]).host
             domains.append(domain)
+            if(domains_indexed.get(domain) == None):
+                domains_indexed[domain]=[]
 
-        return(sorted(Counter(domains).items(), key=operator.itemgetter(1),reverse=True))
+            domains_indexed[domain].append(int(article["time_added"]))
 
-    def getwordsfromarticle(userid):
-        with open('../../data/pocket/pocket_formatted_data.json', 'r') as f:
-            articles = json.load(f)
-            o = json.dumps(articles[userid])
-            articles_for_user = json.loads(o)
-            words =[]
-            for id in articles_for_user :
-                words.append(word_tokenize(articles_for_user[id]["text"]))
-            #words = itertools.chain(*words)
-        #return(list(words))
-        return(words)
-    #print(getDomains("1"))
-    #gutenberg.sents('text1')
-    #print(stopwords.words('french'))
-    # a = wordnet.synsets('french')
-    # b = wordnet.synset(a[0].name()).hyponyms()[0].lemmas()
-    # print(b)
-    # c=sorted(lemma.name()for lemma in b)
-    # print(c)
-    #
-    # print(words.words('en')[500:600])
+        times_added = list(domains_indexed.values())
+        maxvalues = lambda x : (x,max(domains_indexed[x]))
+        recent_articles = list(map(maxvalues,domains_indexed))
 
-    def texts(userid):
-        with open('pocket_formatted_data.json', 'r') as f:
-            articles = json.load(f)
-            o = json.dumps(articles[userid])
-            articles_for_user = json.loads(o)
-            texts = []
-            for id in articles_for_user :
-                texts.append(articles_for_user[id]["text"])
-        return(texts)
+        # from most recent to less recent
+        ordered_recent_articles = sorted(recent_articles, key=operator.itemgetter(1),reverse=True)
+
+        # Computation of a window of articles selection in the last 30 days starting from the last added article
+        time_last_article = ordered_recent_articles[0][1]
+        date_last_added_article = date.fromtimestamp(time_last_article)
+        window_selection_articles = date_last_added_article - timedelta(days=30)
+        window_selection_articles_timestamp = calendar.timegm(window_selection_articles.timetuple())
+
+        # sort domains by frequency
+        frequency = sorted(Counter(domains).items(), key=operator.itemgetter(1),reverse=True)
+        meanFrequency = np.mean(list(Counter(domains).values()))
+
+        favourite_sites={}
+        i=2
+        for recent in ordered_recent_articles :
+            favourite_sites[recent[0]]=i
+            i = i - 1
+            if (favourite_sites[recent[0]] > window_selection_articles_timestamp )|(i <=0):
+                break
+        j=10
+        for one in frequency :
+            if favourite_sites.get(one[0]) == None :
+                favourite_sites[one[0]] = 0
+            favourite_sites[one[0]]= favourite_sites[one[0]] + j
+            j = j- 2
+            if (favourite_sites[one[0]] < meanFrequency) | (j <= 0):
+                break
+        return(sorted(favourite_sites.items(), key=operator.itemgetter(1),reverse=True))
+
+    def getwordsfromarticle(self,articles_for_user):
+        words =[]
+        for article in articles_for_user :
+            words.append(word_tokenize(article["text"]))
+        words = itertools.chain(*words)
+        return(list(words))
 
     @staticmethod
     def detect_language(words_text):
@@ -71,33 +111,44 @@ class TextLearning() :
             i +=1
         return(files[np.argmax(inter_length)])
 
-    def remove_stopwords(words):
-        reg_words = r"(?x)"
-        reg_words += "(?:[:=;] [oO\-]? [D\)\]\(\]/\\OpP])"                                      # Smileys
-        reg_words += "| (?:(?:\d+,?)+(?:\.?\d+)?)"                                              # numbers with different variants of format
-        reg_words += "| (\$|\€)?\d+(\.\d+)?%?"                                                 # percentages and money EUR and USD - NOT USED HERE
-        #reg_words += "| \w'"                                                                    # contractions d', l', ...
-        reg_words += "| \w+"                                                                    # plain words
-        #reg_words += "| [^\w\s]"                                                                # punctuations
-        reg_words = r"\w'"
-        reg_words += '|((?<=[^\w\s])\w(?=[^\w\s])|(\W))+'
+    def load_stopwords(self,language):
+        split = lambda x : x.rsplit()
+        if language == 'french':
+            with open(self.stop_words_location+'/stopwords-fr.txt', 'r',encoding="utf-8") as f:
+                stopwords = map(split,f.readlines())
+        else:
+           with open(self.stop_words_location+'/stopwords-en.txt', 'r',encoding="utf-8") as f:
+                stopwords = map(split,f.readlines())
+        stopwords = itertools.chain(*stopwords)
+        return(list(stopwords))
 
-        frenchWordTokenizer=RegexpTokenizer(reg_words,gaps=True)
+    def texts(self,userid):
+        with open('pocket_formatted_data.json', 'r') as f:
+            articles = json.load(f)
+            o = json.dumps(articles[userid])
+            articles_for_user = json.loads(o)
+            texts = []
+            for id in articles_for_user :
+                texts.append(articles_for_user[id]["text"])
+        return(texts)
 
-        words =""
-        stopwords_fr = stopwords.words('french')
-        stopwords_en = stopwords.words('english')
+
+
+    def remove_stopwords(self,words):
+
         words_rmg =[]
         lower_lambda =  lambda x : x.lower()
         for word in map(lower_lambda,words):
-            if (word.lower() not in stopwords_fr) & (word.lower() not in stopwords_en):
+            if (word.lower() not in self.stop_words) & (len(word) > 3):
                 words_rmg.append(word)
-        tokens = [frenchWordTokenizer.tokenize(s) for s in words_rmg]
+        tokens = [self.word_tokenizer.tokenize(s) for s in words_rmg]
         return(list(itertools.chain(*tokens)))
 
-    def stem(words):
-        frenchStemmer=nltk.stem.SnowballStemmer('french', ignore_stopwords=True)
-        englishStemmer=nltk.stem.SnowballStemmer('english', ignore_stopwords=True)
-        return([frenchStemmer.stem(operator.itemgetter(0)(w)) for w in words])
+    def stem_and_tag(self,words):
+        stemmed_words = [str(self.stemmer.stem(w)) for w in words]
+        tagged_words = nltk.pos_tag(stemmed_words)
+        items = [item for item in tagged_words if item[1].startswith('V')]
+        return(nltk.FreqDist(items).most_common(50))
+
 
 
