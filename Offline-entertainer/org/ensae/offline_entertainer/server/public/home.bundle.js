@@ -55,6 +55,42 @@
 	var Panel = ReactBootstrap.Panel;
 	var user_id = window.location.search.split("=")[1];
 
+	var SimpleSlider = React.createClass({
+	  displayName: 'SimpleSlider',
+
+	  render: function render() {
+
+	    var items = this.props.data.map(function (reco) {
+	      return React.createElement(
+	        'div',
+	        null,
+	        React.createElement(
+	          'h3',
+	          null,
+	          reco.title
+	        )
+	      );
+	    });
+
+	    var settings = {
+	      dots: true,
+	      infinite: true,
+	      speed: 500,
+	      slidesToShow: 1,
+	      slidesToScroll: 1,
+	      arrows: true,
+	      autoplay: true,
+	      autoplaySpeed: 5000
+	    };
+	    return React.createElement(
+	      Slider,
+	      settings,
+	      items
+	    );
+	  }
+
+	});
+
 	var ArticleForm = React.createClass({
 	  displayName: 'ArticleForm',
 
@@ -76,7 +112,7 @@
 	  render: function render() {
 	    return React.createElement(
 	      'form',
-	      { className: 'articleForm', onSubmit: this.handleSubmit },
+	      { onSubmit: this.handleSubmit },
 	      React.createElement('input', { type: 'text', placeholder: 'Votre URL', value: this.state.url, onChange: this.handleURLChange }),
 	      React.createElement('br', null),
 	      React.createElement('input', { type: 'submit', value: 'Post' })
@@ -112,22 +148,22 @@
 	var ArticleList = React.createClass({
 	  displayName: 'ArticleList',
 
-	  getInitialState: function getInitialState() {
-	    return { data: [] };
-	  },
-	  shouldComponentUpdate: function shouldComponentUpdate() {
-	    return true;
-	  },
-	  update: function update() {
-	    this.state.data.push(this.props.data);
-	  },
+	  //   getInitialState: function() {
+	  //    return {data: []};
+	  //  },
+	  //  shouldComponentUpdate: function() {
+	  //    return true;
+	  //  },
+	  //  update : function(){
+	  //    this.state.data.push(this.props.data);
+	  //  },
 	  render: function render() {
 	    //this.update();
-	    var test = this.props.data;
-	    test.sort(function (a, b) {
+	    var articleslist = this.props.data;
+	    articleslist = articleslist.sort(function (a, b) {
 	      return b.time_added - a.time_added;
 	    });
-	    var articles = test.map(function (article) {
+	    var articles = articleslist.map(function (article) {
 	      return React.createElement(
 	        Article,
 	        { text: article.text, title: article.title, key: article.url, isArticle: article.is_article },
@@ -146,7 +182,7 @@
 	  displayName: 'ArticleBox',
 
 	  getInitialState: function getInitialState() {
-	    return { data: [] };
+	    return { data: [], recos: [] };
 	  },
 	  loadCommentsFromServer: function loadCommentsFromServer() {
 
@@ -159,6 +195,19 @@
 	      }.bind(this),
 	      error: function (xhr, status, err) {
 	        console.error(this.props.url_reload, status, err.toString());
+	      }.bind(this)
+	    });
+	  },
+	  loadRecosFromServer: function loadRecosFromServer() {
+	    $.ajax({
+	      url: this.props.url_reco + user_id,
+	      dataType: 'json',
+	      cache: false,
+	      success: function (data) {
+	        this.setState({ recos: data });
+	      }.bind(this),
+	      error: function (xhr, status, err) {
+	        console.error(this.props.url_reco, status, err.toString());
 	      }.bind(this)
 	    });
 	  },
@@ -175,26 +224,41 @@
 	        this.setState({ data: data });
 	      }.bind(this),
 	      error: function (xhr, status, err) {
-	        console.error(this.props.url_reload, status, err.toString());
+	        console.error(this.props.url, status, err.toString());
 	      }.bind(this)
 	    });
 	  },
 	  componentDidMount: function componentDidMount() {
+
 	    this.loadCommentsFromServer();
+	    this.loadRecosFromServer();
 	  },
 	  render: function render() {
 	    return React.createElement(
 	      'div',
 	      { className: 'ArticleBox' },
-	      'Ajouter un article',
-	      React.createElement(ArticleForm, { onArticleSubmit: this.handleSubmit, userid: user_id }),
-	      'La liste d articles :',
-	      React.createElement(ArticleList, { data: this.state.data })
+	      React.createElement(SimpleSlider, { data: this.state.recos }),
+	      React.createElement(
+	        'div',
+	        { className: 'ArticleAdd' },
+	        'Ajouter un article :',
+	        React.createElement(ArticleForm, { onArticleSubmit: this.handleSubmit, userid: user_id })
+	      ),
+	      React.createElement(
+	        'div',
+	        null,
+	        React.createElement(
+	          'h3',
+	          null,
+	          'La liste d\'articles :'
+	        ),
+	        React.createElement(ArticleList, { data: this.state.data })
+	      )
 	    );
 	  }
 	});
 
-	ReactDOM.render(React.createElement(ArticleBox, { url_reload: 'http://127.0.0.1:3000/api/articles/', pollInterval: 2000, url: 'http://127.0.0.1:3000/api/addArticle' }), document.getElementById('content'));
+	ReactDOM.render(React.createElement(ArticleBox, { url_reload: 'http://127.0.0.1:3000/api/articles/', url: 'http://127.0.0.1:3000/api/addArticle', url_reco: 'http://127.0.0.1:3000/api/recommendations/' }), document.getElementById('content'));
 
 /***/ },
 /* 1 */

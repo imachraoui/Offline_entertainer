@@ -100,12 +100,14 @@
 	    this.getUsers();
 	  },
 	  render: function render() {
+
 	    return React.createElement(
 	      'form',
-	      { className: 'userForm', onSubmit: this.handleSubmit },
-	      React.createElement('select', { id: 'user', placeholder: 'User ID', value: this.state.user, onChange: this.handleUserChange }),
+	      { className: 'navbar-form pull-left', onSubmit: this.handleSubmit },
+	      'Sélectionner un id d\'utilisateur : ',
+	      React.createElement('select', { id: 'user', placeholder: 'User ID', value: this.state.user, onChange: this.handleUserChange, className: 'span2' }),
 	      React.createElement('br', null),
-	      React.createElement('input', { type: 'submit', value: 'Post' })
+	      React.createElement('input', { type: 'submit', className: 'btn', value: 'Envoyer' })
 	    );
 	  }
 	});
@@ -135,11 +137,6 @@
 	//    );
 	//  }
 	//});
-
-	//ReactDOM.render(
-	//  <Authentication url="http://127.0.0.1:3000/api/auth"/>,
-	//  document.getElementById('content')
-	//);
 
 	ReactDOM.render(React.createElement(SelectUser, { url: 'http://127.0.0.1:3000/api/users', url_auth: 'http://127.0.0.1:3000/api/auth' }), document.getElementById('content'));
 
