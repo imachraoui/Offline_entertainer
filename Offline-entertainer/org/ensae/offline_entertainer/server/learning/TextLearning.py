@@ -15,6 +15,7 @@ from nltk import *
 import itertools
 import numpy as np
 from nltk.tokenize import RegexpTokenizer
+from sklearn.feature_extraction.text import CountVectorizer
 
 class TextLearning() :
 
@@ -34,6 +35,9 @@ class TextLearning() :
     frenchStemmer=nltk.stem.SnowballStemmer('french', ignore_stopwords=True)
     englishStemmer=nltk.stem.SnowballStemmer('english', ignore_stopwords=True)
     frenchWordTokenizer=RegexpTokenizer(reg_words,gaps=True)
+
+    recommendation_model = None
+    text_vectorizer = None
 
     def __init__(self,language) :
         if(language == 'english'):
@@ -122,33 +126,42 @@ class TextLearning() :
         stopwords = itertools.chain(*stopwords)
         return(list(stopwords))
 
-    def texts(self,userid):
-        with open('pocket_formatted_data.json', 'r') as f:
+    def get_stemmed_texts(self,userid,file_path,with_category):
+        with open(file_path, 'r') as f:
             articles = json.load(f)
             o = json.dumps(articles[userid])
             articles_for_user = json.loads(o)
             texts = []
             for id in articles_for_user :
-                texts.append(articles_for_user[id]["text"])
+                text=articles_for_user[id]["title"]+ " "+articles_for_user[id]["text"]
+                stemmed_words = self.stem(word_tokenize(text))
+                text = ' '.join(stemmed_words)
+                if with_category:
+                    texts.append((text,articles_for_user[id]['category']))
+                else:
+                    texts.append(text)
         return(texts)
-
-
 
     def remove_stopwords(self,words):
 
         words_rmg =[]
         lower_lambda =  lambda x : x.lower()
-        for word in map(lower_lambda,words):
+        tokens = [self.word_tokenizer.tokenize(s) for s in words]
+        for word in map(lower_lambda,list(itertools.chain(*tokens))):
             if (word.lower() not in self.stop_words) & (len(word) > 3):
                 words_rmg.append(word)
-        tokens = [self.word_tokenizer.tokenize(s) for s in words_rmg]
-        return(list(itertools.chain(*tokens)))
 
-    def stem_and_tag(self,words):
+        return(words_rmg)
+
+    def stem(self,words):
         stemmed_words = [str(self.stemmer.stem(w)) for w in words]
-        tagged_words = nltk.pos_tag(stemmed_words)
-        items = [item for item in tagged_words if item[1].startswith('V')]
-        return(nltk.FreqDist(items).most_common(50))
+        return(stemmed_words)
 
+    @staticmethod
+    def get_areas_of_interest(user_id) :
+        tuple_texts_test = TextLearning('english').get_stemmed_texts(user_id,'../data/pocket/pocket_formatted_data.json',False)
+        test_matrix_real= TextLearning.text_vectorizer.transform(tuple_texts_test)
+        categories_real = TextLearning.recommendation_model.predict(test_matrix_real)
+        return(sorted(Counter(categories_real).items(), key=operator.itemgetter(1),reverse=True))
 
 

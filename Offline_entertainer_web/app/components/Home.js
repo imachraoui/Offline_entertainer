@@ -8,6 +8,35 @@ var Panel = ReactBootstrap.Panel;
 var user_id = window.location.search.split("=")[1];
 
 
+var SimpleSlider = React.createClass({
+
+  render: function () {
+
+    var items = this.props.data.map(function (reco) {
+            return (<div><h3>{reco.title}</h3></div>);
+        });
+
+    var settings = {
+      dots: true,
+      infinite: true,
+      speed: 500,
+      slidesToShow: 1,
+      slidesToScroll: 1,
+      arrows :  true,
+      autoplay : true,
+      autoplaySpeed : 5000
+        };
+    return (
+      <Slider {...settings}>
+        {items}
+      </Slider>
+    );
+  }
+
+});
+
+
+
 var ArticleForm = React.createClass({
    getInitialState : function(){
     return {url: ''};
@@ -26,9 +55,9 @@ var ArticleForm = React.createClass({
   },
   render: function() {
     return (
-     <form className="articleForm" onSubmit={this.handleSubmit}>
-        <input type="text" placeholder = "Votre URL" value={this.state.url} onChange={this.handleURLChange}/><br/>
-        <input type="submit" value="Post" />
+     <form onSubmit={this.handleSubmit}>
+        <input type="text" placeholder = "Votre URL" value={this.state.url} onChange={this.handleURLChange} /><br/>
+        <input type="submit" value="Post"  />
      </form>
     );
   }
@@ -56,20 +85,10 @@ var Article = React.createClass({
 });
 
 var ArticleList = React.createClass({
-   getInitialState: function() {
-    return {data: []};
-  },
-  shouldComponentUpdate: function() {
-    return true;
-  },
-  update : function(){
-    this.state.data.push(this.props.data);
-  },
    render: function(){
-       //this.update();
-       var test = this.props.data;
-       test.sort(function(a, b) {return b.time_added - a.time_added})
-	  var articles = test.map(function(article) {
+       var articleslist = this.props.data;
+       articleslist= articleslist.sort(function(a, b) {return b.time_added - a.time_added})
+	  var articles = articleslist.map(function(article) {
 		  return (
 			<Article text={article.text} title={article.title} key={article.url} isArticle={article.is_article}>
 			  {article.text}
@@ -85,7 +104,7 @@ var ArticleList = React.createClass({
 
 var ArticleBox = React.createClass({
    getInitialState: function() {
-    return {data: []};
+    return {data: [],recos:[]};
   },
   loadCommentsFromServer: function() {
 
@@ -98,6 +117,19 @@ var ArticleBox = React.createClass({
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url_reload, status, err.toString());
+      }.bind(this)
+    });
+  },
+  loadRecosFromServer: function() {
+    $.ajax({
+      url: this.props.url_reco + user_id,
+      dataType: 'json',
+      cache: false,
+      success: function(data) {
+        this.setState({recos: data});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url_reco, status, err.toString());
       }.bind(this)
     });
   },
@@ -114,20 +146,29 @@ var ArticleBox = React.createClass({
         this.setState({data: data});
       }.bind(this),
       error: function(xhr, status, err) {
-        console.error(this.props.url_reload, status, err.toString());
+        console.error(this.props.url, status, err.toString());
       }.bind(this)
     });
   },
   componentDidMount : function(){
+
     this.loadCommentsFromServer();
+    this.loadRecosFromServer();
   },
   render: function() {
     return (
      <div className="ArticleBox">
-        Ajouter un article
+        <SimpleSlider data={this.state.recos}/>
+        <div className='ArticleAdd'>
+        Ajouter un article :
         <ArticleForm onArticleSubmit={this.handleSubmit} userid={user_id}/>
-        La liste d articles :
+        </div>
+        <div>
+        <h3>La liste d'articles :</h3>
 		<ArticleList data={this.state.data}/>
+		</div>
+
+
       </div>
     );
 
@@ -136,7 +177,7 @@ var ArticleBox = React.createClass({
 });
 
 ReactDOM.render(
-  <ArticleBox url_reload="http://127.0.0.1:3000/api/articles/" pollInterval={2000} url="http://127.0.0.1:3000/api/addArticle" />,
+  <ArticleBox url_reload="http://127.0.0.1:3000/api/articles/" url="http://127.0.0.1:3000/api/addArticle" url_reco="http://127.0.0.1:3000/api/recommendations/"/>,
   document.getElementById('content')
 );
 

@@ -4,7 +4,7 @@ import datetime
 
 class PocketResource(object):
     def __init__(self, uid, url, is_article, has_video, has_image, title, text, time_added=None, language=None, images=None,
-                 videos=None):
+                 videos=None,category=None):
         self.uid = uid
         self.url = url
         self.is_article = is_article
@@ -19,6 +19,7 @@ class PocketResource(object):
         self.text = text
         self.title = title
         self.language = language
+        self.category = category
 
     def getText(self):
         return(self.text)

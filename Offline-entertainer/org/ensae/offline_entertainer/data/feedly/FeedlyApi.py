@@ -182,6 +182,13 @@ class FeedlyAPI(object):
         """
         return self._make_get_request("v3/categories")
 
+    # categories endpoints - http://developer.feedly.com/v3/streams/:category_id_or_feed_id_or_tag_id/contents
+    def get_content_categories(self,category_id):
+        """
+        Returns the user's category contents
+        """
+        return self._make_get_request("v3/streams/"+category_id+"/contents")
+
     def update_category(self, category_id, label):
         """
         Change the label of an existing category

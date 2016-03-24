@@ -50,47 +50,19 @@ var SelectUser = React.createClass({
     this.getUsers();
   },
   render: function() {
+
     return (
 
-    <form className="userForm" onSubmit={this.handleSubmit}>
-        <select id="user" placeholder="User ID" value={this.state.user} onChange={this.handleUserChange} /><br/>
-        <input type="submit" value="Post" />
+    <form className="navbar-form"  onSubmit={this.handleSubmit}>
+
+        Sélectionner un id d'utilisateur : <select id="user" placeholder="User ID" value={this.state.user} onChange={this.handleUserChange} className="span2"/><br/>
+        <p></p>
+        <input type="submit" className="btn btn-primary btn-xl page-scroll" value="Envoyer" />
      </form>
 
     );
   }
 });
-
-//var Authentication = React.createClass({
-//    redirectToArticles: function() {
-//    $.ajax({
-//      url: this.props.url,
-//      dataType: 'text',
-//      cache: false,
-//      success: function(data) {
-//        window.location.replace(data);
-//      }.bind(this),
-//      error: function(xhr, status, err) {
-//        console.error(this.props.url, status, err.toString());
-//      }.bind(this)
-//    });
-//  },
-//  componentDidMount : function(){
-//   // this.redirectToArticles();
-//  },
-//  render: function() {
-//    return (
-//     <div className="Authentication">
-//        V&amp;rification des droits ...
-//      </div>
-//    );
-//  }
-//});
-
-//ReactDOM.render(
-//  <Authentication url="http://127.0.0.1:3000/api/auth"/>,
-//  document.getElementById('content')
-//);
 
 ReactDOM.render(
   <SelectUser url="http://127.0.0.1:3000/api/users" url_auth="http://127.0.0.1:3000/api/auth"/>,

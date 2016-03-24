@@ -25,7 +25,6 @@ def detect_feeds_in_HTML(input_stream):
 
 def get_rss_feeds(domain,weight):
     http= urllib3.PoolManager()
-    context= ssl._create_unverified_context()
     f = http.urlopen('GET',domain, preload_content=False)
     rsslinks=detect_feeds_in_HTML(f)
     results=[]
@@ -35,9 +34,10 @@ def get_rss_feeds(domain,weight):
 
         for i in range(0,weight+1):
             entry={}
-            post = feed.entries[i]
-            entry["title"]= post.title
-            entry["summary"]= post.summary
-            results.append(entry)
+            if(len(feed.entries)>0) :
+                post = feed.entries[i]
+                entry["title"]= post.title
+                entry["summary"]= post.summary
+                results.append(entry)
     return(results)
 
