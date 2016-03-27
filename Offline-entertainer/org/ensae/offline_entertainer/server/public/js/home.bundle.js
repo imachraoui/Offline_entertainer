@@ -61,13 +61,18 @@
 	  render: function render() {
 
 	    var items = this.props.data.map(function (reco) {
+
 	      return React.createElement(
 	        'div',
 	        null,
 	        React.createElement(
 	          'h3',
 	          null,
-	          reco.title
+	          React.createElement(
+	            'a',
+	            { href: reco.link },
+	            reco.title
+	          )
 	        )
 	      );
 	    });
@@ -112,10 +117,22 @@
 	  render: function render() {
 	    return React.createElement(
 	      'form',
-	      { onSubmit: this.handleSubmit },
-	      React.createElement('input', { type: 'text', placeholder: 'Votre URL', value: this.state.url, onChange: this.handleURLChange }),
-	      React.createElement('br', null),
-	      React.createElement('input', { type: 'submit', value: 'Post' })
+	      { className: 'form-inline', onSubmit: this.handleSubmit },
+	      React.createElement(
+	        'div',
+	        { className: 'form-group' },
+	        React.createElement(
+	          'label',
+	          { 'for': 'url' },
+	          'URL'
+	        ),
+	        React.createElement('input', { type: 'text', id: 'url', placeholder: 'Votre URL', className: 'form-control', value: this.state.url, onChange: this.handleURLChange })
+	      ),
+	      React.createElement(
+	        'button',
+	        { type: 'submit', className: 'btn btn-default' },
+	        ' Envoyer '
+	      )
 	    );
 	  }
 	});
@@ -231,17 +248,31 @@
 	      React.createElement(
 	        'div',
 	        { className: 'ArticleAdd' },
-	        'Ajouter un article :',
-	        React.createElement(ArticleForm, { onArticleSubmit: this.handleSubmit, userid: user_id })
+	        React.createElement(
+	          'div',
+	          { className: 'panel ' },
+	          React.createElement(
+	            'div',
+	            { className: 'panel-heading' },
+	            React.createElement(
+	              'h2',
+	              { className: 'panel-title' },
+	              'Ajouter un article'
+	            ),
+	            ' '
+	          ),
+	          React.createElement(
+	            'div',
+	            { className: 'panel-body' },
+	            React.createElement(ArticleForm, { onArticleSubmit: this.handleSubmit, userid: user_id })
+	          )
+	        )
 	      ),
+	      React.createElement('br', null),
+	      React.createElement('br', null),
 	      React.createElement(
 	        'div',
 	        null,
-	        React.createElement(
-	          'h3',
-	          null,
-	          'La liste d\'articles :'
-	        ),
 	        React.createElement(ArticleList, { data: this.state.data })
 	      )
 	    );

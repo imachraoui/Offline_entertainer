@@ -13,7 +13,8 @@ var SimpleSlider = React.createClass({
   render: function () {
 
     var items = this.props.data.map(function (reco) {
-            return (<div><h3>{reco.title}</h3></div>);
+
+                return (<div><h3><a href={reco.link}>{reco.title}</a></h3></div>);
         });
 
     var settings = {
@@ -55,9 +56,11 @@ var ArticleForm = React.createClass({
   },
   render: function() {
     return (
-     <form onSubmit={this.handleSubmit}>
-        <input type="text" placeholder = "Votre URL" value={this.state.url} onChange={this.handleURLChange} /><br/>
-        <input type="submit" value="Post"  />
+     <form className="form-inline" onSubmit={this.handleSubmit}>
+        <div className="form-group">
+        <label for="url">URL</label><input type="text" id='url' placeholder = "Votre URL" className='form-control' value={this.state.url} onChange={this.handleURLChange} />
+        </div>
+        <button type="submit" className="btn btn-default"> Envoyer </button>
      </form>
     );
   }
@@ -160,11 +163,13 @@ var ArticleBox = React.createClass({
      <div className="ArticleBox">
         <SimpleSlider data={this.state.recos}/>
         <div className='ArticleAdd'>
-        Ajouter un article :
-        <ArticleForm onArticleSubmit={this.handleSubmit} userid={user_id}/>
+        <div className="panel "><div className='panel-heading'><h2 className="panel-title">Ajouter un article</h2> </div>
+            <div className='panel-body'><ArticleForm onArticleSubmit={this.handleSubmit} userid={user_id}/></div>
         </div>
+        </div>
+        <br/>
+        <br/>
         <div>
-        <h3>La liste d'articles :</h3>
 		<ArticleList data={this.state.data}/>
 		</div>
 

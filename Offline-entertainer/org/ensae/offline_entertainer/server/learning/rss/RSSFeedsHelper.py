@@ -38,6 +38,11 @@ def get_rss_feeds(domain,weight):
                 post = feed.entries[i]
                 entry["title"]= post.title
                 entry["summary"]= post.summary
+                entry["link"] = post.link
+                for link in post["links"]:
+                    if link['type'].startswith('image'):
+                        entry['image']=link['href']
+                        break
                 results.append(entry)
     return(results)
 
